@@ -256,12 +256,23 @@ class ExllamaV3Container(BaseModelContainer):
 
         if not hardware_supports_flash_attn(gpu_device_list):
             if torch.version.hip:
-                # ROCm/AMD: exllamav3 runs without flash-attn, falling back to
-                # torch SDPA. Unofficial, but functional on supported builds.
-                xlogger.warning(
-                    "Running ExllamaV3 on ROCm/AMD without flash-attn. "
-                    "This is unofficial and performance may be reduced."
-                )
+                # ROCm/AMD: hardware_supports_flash_attn() always reports False on
+                # HIP, but exllamav3 may still use flash-attn. It gates this on the
+                # CK backend (flash_attn_2_cuda) via rocm_flash_disabled(); the
+                # broken aiter Triton backend and the no-flash case both fall back
+                # to torch SDPA. Mirror that gate so the log is accurate.
+                from exllamav3.util.rocm_flash import rocm_flash_disabled
+
+                if rocm_flash_disabled():
+                    xlogger.warning(
+                        "Running ExllamaV3 on ROCm/AMD without flash-attn "
+                        "(torch SDPA fallback). Performance may be reduced."
+                    )
+                else:
+                    xlogger.info(
+                        "Running ExllamaV3 on ROCm/AMD with the CK flash-attn "
+                        "backend."
+                    )
             else:
                 gpu_unsupported_message = (
                     "Unable to run ExllamaV3 because an unsupported GPU is "

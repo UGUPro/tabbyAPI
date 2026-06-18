@@ -9,6 +9,14 @@ cd "$(dirname "$0")" || exit
 # So we activate the existing venv and launch main.py directly, leaving all
 # dependency management to the manual uv setup.
 
+# ROCm runtime settings for the Strix Halo (gfx1151) GPU. The override pins the
+# HSA target to gfx1151 (11.5.1) so GPU kernels (Triton, and the CK flash-attn
+# backend) target the correct ISA. Without it, flash-attn kernels abort the GPU
+# with HSA_STATUS_ERROR_EXCEPTION. Allow the caller's environment to override
+# these if already set.
+export HSA_OVERRIDE_GFX_VERSION="${HSA_OVERRIDE_GFX_VERSION:-11.5.1}"
+export ROCM_INIT_FLAGS="${ROCM_INIT_FLAGS:-0x1}"
+
 if [ -n "$CONDA_PREFIX" ]; then
     echo "It looks like you're in a conda environment. Skipping venv check."
 elif [ -d "venv" ]; then
