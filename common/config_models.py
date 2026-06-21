@@ -365,7 +365,10 @@ class DraftModelConfig(BaseConfigModel):
     draft_model_name: Optional[str] = Field(
         None,
         description=(
-            "An initial draft model to load.\nEnsure the model is in the model directory."
+            "An initial draft model to load.\nEnsure the model is in the model directory.\n"
+            "For DFlash speculative decoding (exllamav3), set this to a DFlash draft model "
+            "paired with its base target model; keep draft_mode as `model` (DFlash is "
+            "auto-detected)."
         ),
     )
     draft_rope_scale: Optional[float] = Field(

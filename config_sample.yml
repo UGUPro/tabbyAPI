@@ -200,6 +200,10 @@ draft_model:
 
   # An initial draft model to load.
   # Ensure the model is in the model directory.
+  # For DFlash speculative decoding (exllamav3), point this at a DFlash draft
+  # model (e.g. turboderp/gemma4-31b-it-DFlash-exl3) paired with its base target
+  # model; keep draft_mode as `model` and exllamav3 auto-detects DFlash. DFlash
+  # drafts default to a long draft length (see draft_num_tokens below).
   draft_model_name:
 
   # Rope scale for draft models (default: 1.0).
