@@ -274,16 +274,27 @@ class ExllamaV3Container(BaseModelContainer):
                         "backend."
                     )
             else:
-                gpu_unsupported_message = (
-                    "Unable to run ExllamaV3 because an unsupported GPU is "
-                    "found in this configuration. \n"
-                    "All GPUs must be ampere "
-                    "(30 series) or newer. AMD GPUs are not supported."
+                min_compute_capability = min(
+                    torch.cuda.get_device_capability(device=device_idx)
+                    for device_idx in gpu_device_list
                 )
 
-                xlogger.warning(gpu_unsupported_message)
+                if min_compute_capability >= (7, 0):
+                    xlogger.warning(
+                        "Running ExllamaV3 on pre-Ampere CUDA GPUs without flash-attn "
+                        "(torch SDPA fallback). This requires an ExllamaV3 build with "
+                        "sm_70 support. Performance may be reduced."
+                    )
+                else:
+                    gpu_unsupported_message = (
+                        "Unable to run ExllamaV3 because an unsupported GPU is "
+                        "found in this configuration. \n"
+                        "All CUDA GPUs must have compute capability 7.0 or newer."
+                    )
 
-                raise RuntimeError(gpu_unsupported_message)
+                    xlogger.warning(gpu_unsupported_message)
+
+                    raise RuntimeError(gpu_unsupported_message)
 
         # Determine max_seq_len and cache_size
         max_seq_len_user = kwargs.get("max_seq_len")
