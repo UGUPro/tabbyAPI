@@ -135,7 +135,17 @@ class ExllamaV3Container(BaseModelContainer):
         self.model_dir = model_directory
         self.hf_model = hf_model
         self.config = Config.from_directory(str(model_directory.resolve()))
-        self.model = Model.from_config(self.config)
+
+        use_tp_early = unwrap(kwargs.get("tensor_parallel"), False)
+        model_kwargs = {}
+        if use_tp_early and "Gemma4" in self.config.arch_string:
+            model_kwargs["swa_full"] = True
+            xlogger.info(
+                "Tensor parallel: using full SWA cache (swa_full) — recurrent SWA snapshots "
+                "disabled, KV cache for sliding layers covers full context."
+            )
+
+        self.model = Model.from_config(self.config, **model_kwargs)
         self.tokenizer = Tokenizer.from_config(self.config)
 
         # Prepare vision model if requested in config
